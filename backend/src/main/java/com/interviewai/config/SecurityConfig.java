@@ -17,12 +17,13 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+// @RequiredArgsConstructor  // DEMO: removed, no injected fields
 public class SecurityConfig {
 
-    // @Lazy prevents circular dependency between SecurityConfig ↔ JwtAuthFilter
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http,
-                                           @Lazy JwtAuthFilter jwtFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http
+                                           // , @Lazy JwtAuthFilter jwtFilter  // DEMO: disabled
+                                           ) throws Exception {
         return http
             .csrf(c -> c.disable())
             .cors(c -> c.configurationSource(corsConfigurationSource()))
@@ -34,10 +35,10 @@ public class SecurityConfig {
                     "/h2-console/**",
                     "/actuator/health"
                 ).permitAll()
-                .anyRequest().authenticated()
+                // .anyRequest().authenticated()  // DEMO: disabled
             )
-            .headers(h -> h.frameOptions(f -> f.disable())) // H2 console
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .headers(h -> h.frameOptions(f -> f.disable()))
+            // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)  // DEMO: disabled
             .build();
     }
 
