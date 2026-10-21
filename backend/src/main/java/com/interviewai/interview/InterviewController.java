@@ -30,6 +30,8 @@ public class InterviewController {
     @Value("${ai.service.url}")
     private String aiUrl;
 
+    private static final String GUEST_EMAIL = "guest@interview.ai"; // DEMO: hardcoded user
+
     // ── Parse resume PDF ────────────────────────────────────
     @PostMapping("/parse-resume")
     public ResponseEntity<?> parseResume(@RequestParam("file") MultipartFile file) {
@@ -52,8 +54,9 @@ public class InterviewController {
 
     // ── Start interview session ─────────────────────────────
     @PostMapping("/start")
-    public ResponseEntity<?> start(@Valid @RequestBody StartRequest req,
-                                   @AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<?> start(@Valid @RequestBody StartRequest req
+                                   // , @AuthenticationPrincipal UserDetails user  // DEMO: disabled
+                                   ) {
         var qs = webClient.post()
             .uri(aiUrl + "/api/questions/generate")
             .contentType(MediaType.APPLICATION_JSON)
@@ -65,7 +68,7 @@ public class InterviewController {
         String structured = "";
         try { structured = mapper.writeValueAsString(req.structured()); } catch (Exception ignored) {}
 
-        var session = service.createSession(user.getUsername(), req.resumeText(), structured);
+        var session = service.createSession(GUEST_EMAIL, req.resumeText(), structured); // DEMO: was user.getUsername()
         return ResponseEntity.ok(Map.of(
             "session_id", session.getId(),
             "questions",  qs != null ? qs.get("questions") : List.of()
@@ -116,9 +119,10 @@ public class InterviewController {
     // ── Get all sessions for dashboard ────────────────────
     @GetMapping("/sessions")
     public ResponseEntity<List<SessionSummaryResponse>> sessions(
-            @AuthenticationPrincipal UserDetails user) {
+            // @AuthenticationPrincipal UserDetails user  // DEMO: disabled
+            ) {
         return ResponseEntity.ok(
-            service.getSessions(user.getUsername()).stream()
+            service.getSessions(GUEST_EMAIL).stream() // DEMO: was user.getUsername()
                 .map(SessionSummaryResponse::from)
                 .toList()
         );
@@ -126,9 +130,10 @@ public class InterviewController {
 
     // ── Get single session detail ──────────────────────────
     @GetMapping("/sessions/{id}")
-    public ResponseEntity<?> detail(@PathVariable Long id,
-                                    @AuthenticationPrincipal UserDetails user) {
-        var data    = service.getDetail(id, user.getUsername());
+    public ResponseEntity<?> detail(@PathVariable Long id
+                                    // , @AuthenticationPrincipal UserDetails user  // DEMO: disabled
+                                    ) {
+        var data    = service.getDetail(id, GUEST_EMAIL); // DEMO: was user.getUsername()
         var answers = ((List<Answer>) data.get("answers")).stream()
             .map(AnswerResponse::from).toList();
         return ResponseEntity.ok(Map.of("session", data.get("session"), "answers", answers));
